@@ -1,0 +1,100 @@
+
+1) Write a query to find the root node.
+ans-1) SELECT
+    id, prod_name
+FROM
+    e_products
+WHERE
+    root_id IS NULL;
+
+
+2) Write a query to find leaf node.
+ans-2) SELECT
+    ep1.id, ep1.prod_name
+FROM
+    e_products ep1
+        LEFT JOIN
+    e_products ep2 ON ep2.root_id = ep1.id
+WHERE
+    ep2.id IS NULL;
+
+
+
+3) Write a query to find non-leaf node.
+ans-3) SELECT DISTINCT 
+    ep1.id, ep1.prod_name
+FROM
+    e_products ep1
+        LEFT JOIN
+    e_products ep2 ON ep2.root_id = ep1.id
+WHERE
+    ep2.id IS NOT NULL;
+
+
+
+4) Write a query to find the path of each node.
+ans-4) WITH RECURSIVE e_products_path (id, prod_name, path) AS
+(
+  SELECT id, prod_name, prod_name as path
+    FROM e_products
+    WHERE root_id IS NULL
+  UNION ALL
+  SELECT ep1.id, ep1.prod_name, CONCAT(ep2.path, ' > ', ep1.prod_name)
+    FROM e_products_path AS ep2 JOIN e_products AS ep1
+      ON ep2.id = ep1.root_id
+)
+SELECT * FROM e_products_path
+ORDER BY path;
+
+ 
+5) Write a function to calculate node level. e.g. Electronics is at 0 level, Camera is on level 2 and iOs is on level 3.
+ans-5)
+Query to create procedure:
+
+DELIMITER //
+
+CREATE PROCEDURE calculate_node_level()
+BEGIN 
+WITH RECURSIVE e_products_path (id, prod_name, lvl) AS
+(
+  SELECT id, prod_name, 0 lvl
+    FROM e_products
+    WHERE root_id IS NULL
+  UNION ALL
+  SELECT ep1.id, ep1.prod_name,ep2.lvl + 1
+    FROM e_products_path AS ep2 JOIN e_products AS ep1
+      ON ep2.id = ep1.root_id
+)
+SELECT * FROM e_products_path
+ORDER BY lvl;
+END//
+DELIMITER ;
+
+Query to call procedure:
+
+CALL calculate_node_level;
+
+
+
+6) Write a procedure to get the immediate children.
+
+ans-6)
+Query to create procedure:
+
+DELIMITER //
+
+CREATE PROCEDURE immediate_children(IN rootID INT)
+BEGIN 
+SELECT id,prod_name FROM e_products WHERE root_id = rootID;
+END//
+DELIMITER ;
+
+Query to call procedure, where number within brackets represents root_id.
+
+CALL immediate_children(1);
+
+
+
+
+
+
